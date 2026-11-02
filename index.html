@@ -73,7 +73,18 @@
         function startGame() {
             isPlaying = true;
             currentMultiplier = 1.00;
-            crashPoint = 1.5 + Math.random() * 8.5; 
+             const random = Math.random();
+if (random < 0.35) {
+    crashPoint = 1.00 + (Math.random() * 1.00);
+} else if (random < 0.65) {
+    crashPoint = 2.00 + (Math.random() * 1.50);
+} else if (random < 0.85) {
+    crashPoint = 3.50 + (Math.random() * 3.50);
+} else if (random < 0.96) {
+    crashPoint = 7.00 + (Math.random() * 8.00);
+} else {
+    crashPoint = 15.00 + (Math.random() * 35.00);
+}
             
             multiplierEl.className = 'multiplier';
             rocketEl.style.transform = 'translateY(0px)';
