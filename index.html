@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background: radial-gradient(circle at top, #1a1a2e 0%, #0f0f13 100%);
+            color: white;
+            font-family: sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .balance { font-size: 20px; margin-bottom: 20px; color: #FFD700; font-weight: bold; }
+        .multiplier { font-size: 64px; font-weight: 900; margin: 20px 0; transition: 0.1s; }
+        .multiplier.crashed { color: #ff4757; }
+        .multiplier.won { color: #2ed573; }
+        .btn {
+            background: #2AABEE;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 16px;
+            cursor: pointer;
+            width: 80%;
+            max-width: 300px;
+            transition: 0.2s;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { background: #555; color: #aaa; }
+        .rocket { font-size: 50px; transition: transform 0.1s linear; margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+
+    <div class="balance">Баланс: <span id="balance">0</span> ⭐</div>
+    
+    <div class="rocket" id="rocket">🚀</div>
+    <div class="multiplier" id="multiplier">1.00x</div>
+
+    <button class="btn" id="action-btn" onclick="action()">Начать игру</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        let balance = 0;
+        let currentMultiplier = 1.00;
+        let isPlaying = false;
+        let gameInterval;
+        let crashPoint = 0;
+        
+        const balanceEl = document.getElementById('balance');
+        const multiplierEl = document.getElementById('multiplier');
+        const actionBtn = document.getElementById('action-btn');
+        const rocketEl = document.getElementById('rocket');
+
+        function updateBalance() {
+            balanceEl.innerText = balance.toFixed(2);
+        }
+
+        function startGame() {
+            isPlaying = true;
+            currentMultiplier = 1.00;
+            crashPoint = 1.5 + Math.random() * 8.5; 
+            
+            multiplierEl.className = 'multiplier';
+            rocketEl.style.transform = 'translateY(0px)';
+            actionBtn.innerText = 'ЗАБРАТЬ';
+            actionBtn.style.background = '#2ed573';
+
+            gameInterval = setInterval(() => {
+                currentMultiplier += 0.05;
+                multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
+                rocketEl.style.transform = `translateY(-${currentMultiplier * 15}px)`;
+
+                if (currentMultiplier >= crashPoint) {
+                    crash();
+                }
+            }, 100);
+        }
+
+        function crash() {
+            clearInterval(gameInterval);
+            isPlaying = false;
+            multiplierEl.innerText = 'ВЗРЫВ!';
+            multiplierEl.className = 'multiplier crashed';
+            actionBtn.innerText = 'Начать заново';
+            actionBtn.style.background = '#2AABEE';
+            rocketEl.innerText = '💥'; 
+            
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        }
+
+        function cashout() {
+            clearInterval(gameInterval);
+            isPlaying = false;
+            
+            const winAmount = 10 * currentMultiplier;
+            balance += winAmount;
+            updateBalance();
+
+            multiplierEl.className = 'multiplier won';
+            actionBtn.innerText = 'Выиграно ' + winAmount.toFixed(2) + ' ⭐';
+            
+            setTimeout(() => {
+                actionBtn.innerText = 'Начать заново';
+                actionBtn.style.background = '#2AABEE';
+            }, 1500);
+
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        function action() {
+            if (!isPlaying) {
+                rocketEl.innerText = '🚀';
+                actionBtn.style.background = '#2ed573';
+                startGame();
+            } else {
+                cashout();
+            }
+        }
+
+        updateBalance();
+    </script>
+</body>
+      </html>
